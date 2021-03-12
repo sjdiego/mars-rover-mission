@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Command as ModelsCommand;
+use App\Models\Command as RoverCommand;
 use App\Models\Terrain;
 use App\Models\Vehicle;
 use Illuminate\Console\Command;
@@ -41,19 +41,20 @@ class Rover extends Command
     public function handle()
     {
         try {
-            $this->prepareEnvironment();
-            $this->handleCommands();
+            list($terrain, $vehicle) = $this->prepareEnvironment();
+
+            $this->handleCommands($terrain, $vehicle);
         } catch (\Exception $e) {
-            $this->error($e->getMessage());
+            $this->error($e);
         }
     }
 
     /**
      * It generates a terrain with randomly placed obstacles and puts in the vehicle
      *
-     * @return void
+     * @return array
      */
-    protected function prepareEnvironment(): void
+    protected function prepareEnvironment(): array
     {
         $this->info('Mars Rover Mission v1');
         $this->newLine(1);
@@ -74,20 +75,40 @@ class Rover extends Command
         // Display data of generated data
         $this->comment('A terrain with randomly placed obstacles has been generated automatically.');
         $this->comment(sprintf('The surface has %d blocks of width and %d blocks of height.', $terrain->width, $terrain->height));
-        $this->newLine(1);
+        $this->newLine();
         $this->comment(sprintf(
-            'The vehicle has been placed on row %d and column %d with a orientation of %s.',
+            'The vehicle has been placed on latitude %d and longitude %d with a %s orientation.',
             $vehicle->latitude, $vehicle->longitude, $vehicle->orientation
         ));
-        $this->newLine(1);
+        $this->newLine();
 
         // Draws terrain with obstacles and placed vehicle in console
         $this->drawTerrain($terrain, $vehicle);
+        $this->newLine();
+
+        return [$terrain, $vehicle];
     }
 
-    protected function handleCommands()
+    protected function handleCommands(Terrain $terrain, Vehicle $vehicle)
     {
-        $typedCommands = $this->ask('Please type here the commands to send to the vehicle:');
+        $this->newLine();
+
+        do {
+            $typedCommands = $this->ask('Please type here the commands to send to the vehicle');
+        } while (!strlen($typedCommands));
+
+        foreach (str_split($typedCommands) as $code) {
+            $cmd = new RoverCommand($code);
+            $vehicle->runCommand($cmd, $terrain);
+
+            $this->comment(sprintf(
+                'The vehicle has been displaced to %d,%d',
+                $vehicle->latitude, $vehicle->longitude
+            ));
+        }
+
+        $this->newLine();
+        $this->info(sprintf('The sequence \'%s\' has been executed successfully.', $typedCommands));
     }
 
     /**
@@ -108,7 +129,7 @@ class Rover extends Command
 
                 $vehiclePlacement = ($j === $vehicle->longitude && $i === $vehicle->latitude);
 
-                echo $vehiclePlacement ? $vehicle->orientation : ($terrain->surface[$i][$j] === 0 ? ' ' : 'X');
+                echo $vehiclePlacement ? $vehicle->orientation : ($terrain->surface[$i][$j] === 0 ? '.' : 'X');
                 echo ($j === count($terrain->surface[$i])) ? "|" . PHP_EOL : '';
             }
         }

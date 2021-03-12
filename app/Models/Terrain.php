@@ -30,7 +30,7 @@ class Terrain
         do {
             $latitude = random_int(1, $this->height);
             $longitude = random_int(1, $this->width);
-        } while ($this->surface[$latitude][$longitude] === 1);
+        } while ($this->surface[$latitude][$longitude] !== 0);
 
         return compact('latitude', 'longitude');
     }
