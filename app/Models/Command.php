@@ -1,14 +1,8 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Command extends Model
+class Command
 {
-    use HasFactory;
-
     const AVAILABLE_COMMANDS = [
         'F' => 'Forward',
         'R' => 'Right',

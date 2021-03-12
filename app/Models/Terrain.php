@@ -2,53 +2,36 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Terrain extends Model
+class Terrain
 {
-    use HasFactory;
+    const OBSTACLE_PROBABLITY = 0.03;
 
-    public const WIDTH = 45;
-    public const HEIGHT = 15;
-    public const OBSTACLE_PROBABLITY = 0.02;
+    public array $surface;
+
+    public function __construct(int $width = 45, int $height = 15)
+    {
+        $this->width = $width;
+        $this->height = $height;
+
+        for ($i = 1; $i <= $height; $i++) {
+            for ($j = 1; $j <= $width; $j++) {
+                $this->surface[$i][$j] = (int) (random_int(0, 100) / 100 <= self::OBSTACLE_PROBABLITY);
+            }
+        }
+    }
 
     /**
-     * It returns a terrain with randomly placed obstacles
+     * Finds a location free of obstacles
      *
      * @return array
      */
-    public function generate(): array
+    public function getRandomLocation(): array
     {
-        $terrain = [];
+        do {
+            $latitude = random_int(1, $this->height);
+            $longitude = random_int(1, $this->width);
+        } while ($this->surface[$latitude][$longitude] === 1);
 
-        for ($i = 1; $i <= self::HEIGHT; $i++) {
-            for ($j = 1; $j <= self::WIDTH; $j++) {
-                $terrain[$i][$j] = (random_int(0, 100) / 100 <= self::OBSTACLE_PROBABLITY) ? 1 : 0;
-            }
-        }
-
-        return $terrain;
-    }
-
-    public function draw(array $terrain): void
-    {
-        echo str_pad('', count($terrain[1]) + 2, '-') . PHP_EOL;
-
-        for ($i = 1; $i <= count($terrain); $i++) {
-            for ($j = 1; $j <= count($terrain[$i]); $j++) {
-                if ($j === 1) {
-                    echo "|";
-                }
-
-                echo $terrain[$i][$j] === 0 ? ' ' : 'X';
-
-                if ($j === count($terrain[$i])) {
-                    echo "|" . PHP_EOL;
-                }
-            }
-        }
-
-        echo str_pad('', count($terrain[1]) + 2, '-') . PHP_EOL;
+        return compact('latitude', 'longitude');
     }
 }
