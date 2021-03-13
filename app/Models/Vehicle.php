@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Movements\{Forward, Left, Right};
+
 class Vehicle
 {
     const ORIENTATIONS = ['N', 'S', 'E', 'W'];
@@ -16,44 +18,12 @@ class Vehicle
         }
     }
 
-    public function runCommand(Command $command, Terrain $terrain)
+    public function getCoordsFromCommand(Command $command)
     {
-        $coords = match(mb_strtoupper($command->command)) {
-            'F' => $this->moveForward(),
-            'R' => $this->moveRight(),
-            'L' => $this->moveLeft(),
-        };
-
-        return $coords;
-    }
-
-    protected function moveForward()
-    {
-        return match($this->orientation) {
-            'N' => ['lat' => --$this->latitude, 'lng' => $this->longitude],
-            'S' => ['lat' => ++$this->latitude, 'lng' => $this->longitude],
-            'W' => ['lat' => --$this->longitude, 'lng' => $this->latitude],
-            'E' => ['lat' => ++$this->longitude, 'lng' => $this->latitude],
-        };
-    }
-
-    protected function moveRight()
-    {
-        return match ($this->orientation) {
-            'N' => ['lat' => $this->latitude, 'lng' => --$this->longitude],
-            'S' => ['lat' => $this->latitude, 'lng' => ++$this->longitude],
-            'W' => ['lat' => $this->longitude, 'lng' => --$this->latitude],
-            'E' => ['lat' => $this->longitude, 'lng' => ++$this->latitude],
-        };
-    }
-
-    protected function moveLeft()
-    {
-        return match ($this->orientation) {
-            'N' => ['lat' => $this->latitude, 'lng' => ++$this->longitude],
-            'S' => ['lat' => $this->latitude, 'lng' => --$this->longitude],
-            'W' => ['lat' => $this->longitude, 'lng' => ++$this->latitude],
-            'E' => ['lat' => $this->longitude, 'lng' => --$this->latitude],
+        return match(mb_strtoupper($command->command)) {
+            'F' => (new Forward($this))->get(),
+            'R' => (new Right($this))->get(),
+            'L' => (new Left($this))->get(),
         };
     }
 }

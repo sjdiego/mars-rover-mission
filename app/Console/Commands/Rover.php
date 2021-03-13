@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Command as RoverCommand;
-use App\Models\Terrain;
-use App\Models\Vehicle;
+use App\Exceptions\CollisionException;
+use App\Http\Controllers\{EnvironmentController, VehicleController};
+use App\Models\{Terrain, Vehicle};
 use Illuminate\Console\Command;
 
 class Rover extends Command
@@ -50,65 +50,57 @@ class Rover extends Command
     }
 
     /**
-     * It generates a terrain with randomly placed obstacles and puts in the vehicle
+     * It prepares the terrain with obstacles and puts a new vehicle in a safe place
      *
      * @return array
      */
     protected function prepareEnvironment(): array
     {
-        $this->info('Mars Rover Mission v1');
-        $this->newLine(1);
-
-        // Generates a new terrain with randomly placed
-        $terrain = new Terrain();
-
-        // Gets available location to place vehicle
-        $coords = $terrain->getRandomLocation();
-
-        // Creates a new vehicle and places it on available coordinates
-        $vehicle = new Vehicle(
-            $coords['latitude'],
-            $coords['longitude'],
-            Vehicle::ORIENTATIONS[array_rand(Vehicle::ORIENTATIONS, 1)]
-        );
+        $environment = new EnvironmentController();
+        list($terrain, $vehicle) = $environment->prepare();
 
         // Display data of generated data
-        $this->comment('A terrain with randomly placed obstacles has been generated automatically.');
-        $this->comment(sprintf('The surface has %d blocks of width and %d blocks of height.', $terrain->width, $terrain->height));
+        $this->info('Mars Rover Mission v1');
         $this->newLine();
-        $this->comment(sprintf(
-            'The vehicle has been placed on latitude %d and longitude %d with a %s orientation.',
-            $vehicle->latitude, $vehicle->longitude, $vehicle->orientation
-        ));
+        $this->comment(__('messages.terrain.generated'));
+        $this->comment(__('messages.terrain.surface.blocks', [
+            'heigth' => $terrain->height,
+            'width' => $terrain->width
+        ]));
+        $this->comment(__('messages.vehicle.placement', [
+            'latitude' => $vehicle->latitude,
+            'longitude' => $vehicle->longitude,
+            'orientation' => $vehicle->orientation
+        ]));
         $this->newLine();
 
-        // Draws terrain with obstacles and placed vehicle in console
         $this->drawTerrain($terrain, $vehicle);
-        $this->newLine();
 
         return [$terrain, $vehicle];
     }
 
+    /**
+     * It asks for commands and sends it to the Vehicle controller
+     *
+     * @param Terrain $terrain
+     * @param Vehicle $vehicle
+     *
+     * @return void
+     */
     protected function handleCommands(Terrain $terrain, Vehicle $vehicle)
     {
         $this->newLine();
 
         do {
-            $typedCommands = $this->ask('Please type here the commands to send to the vehicle');
-        } while (!strlen($typedCommands));
+            $commands = trim(mb_strtoupper($this->ask(__('messages.ask.commands'))));
+        } while (!strlen($commands));
 
-        foreach (str_split($typedCommands) as $code) {
-            $cmd = new RoverCommand($code);
-            $vehicle->runCommand($cmd, $terrain);
+        $controller = new VehicleController($terrain, $vehicle);
+        $path = $controller->executeCommands($commands);
 
-            $this->comment(sprintf(
-                'The vehicle has been displaced to %d,%d',
-                $vehicle->latitude, $vehicle->longitude
-            ));
-        }
+        dump(json_encode($path, JSON_PRETTY_PRINT));
 
-        $this->newLine();
-        $this->info(sprintf('The sequence \'%s\' has been executed successfully.', $typedCommands));
+        $this->info(__('messages.commands.success', ['commands' => $commands]));
     }
 
     /**
@@ -121,19 +113,21 @@ class Rover extends Command
      */
     protected function drawTerrain(Terrain $terrain, Vehicle $vehicle)
     {
-        echo str_pad('', count($terrain->surface[1]) + 2, '-') . PHP_EOL;
+        echo str_pad('', count($terrain->surface[0]) + 2, '-') . PHP_EOL;
 
-        for ($i = 1; $i <= count($terrain->surface); $i++) {
-            for ($j = 1; $j <= count($terrain->surface[$i]); $j++) {
-                echo (1 === $j) ? '|' : '';
+        collect($terrain->surface)->each(function ($col, $i) use ($vehicle) {
+            echo '|';
+            collect($col)->map(function ($obstacle, $j) use ($i, $vehicle) {
+                if ($vehicle->latitude === $i && $vehicle->longitude === $j) {
+                    echo $vehicle->orientation;
+                } elseif (is_bool($obstacle)) {
+                    echo $obstacle ? '#' : '.';
+                }
+            });
+            echo '|' . PHP_EOL;
+        });
 
-                $vehiclePlacement = ($j === $vehicle->longitude && $i === $vehicle->latitude);
-
-                echo $vehiclePlacement ? $vehicle->orientation : ($terrain->surface[$i][$j] === 0 ? '.' : 'X');
-                echo ($j === count($terrain->surface[$i])) ? "|" . PHP_EOL : '';
-            }
-        }
-
-        echo str_pad('', count($terrain->surface[1]) + 2, '-') . PHP_EOL;
+        echo str_pad('', count($terrain->surface[0]) + 2, '-') . PHP_EOL;
+        $this->newLine();
     }
 }

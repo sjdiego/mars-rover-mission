@@ -4,20 +4,15 @@ namespace App\Models;
 
 class Terrain
 {
-    const OBSTACLE_PROBABLITY = 0.03;
+    const OBSTACLE_PROBABLITY = 0.1;
 
     public array $surface;
 
-    public function __construct(int $width = 45, int $height = 15)
-    {
-        $this->width = $width;
-        $this->height = $height;
-
-        for ($i = 1; $i <= $height; $i++) {
-            for ($j = 1; $j <= $width; $j++) {
-                $this->surface[$i][$j] = (int) (random_int(0, 100) / 100 <= self::OBSTACLE_PROBABLITY);
-            }
-        }
+    public function __construct(public int $width, public int $height) {
+        $this->surface = collect(range(1, $height))
+            ->map(fn () => collect(range(1, $width))
+            ->map(fn () => random_int(0, 100) / 100 <= self::OBSTACLE_PROBABLITY))
+            ->toArray();
     }
 
     /**
@@ -28,9 +23,9 @@ class Terrain
     public function getRandomLocation(): array
     {
         do {
-            $latitude = random_int(1, $this->height);
-            $longitude = random_int(1, $this->width);
-        } while ($this->surface[$latitude][$longitude] !== 0);
+            $latitude = random_int(0, $this->height - 1);
+            $longitude = random_int(0, $this->width - 1);
+        } while ($this->surface[$latitude][$longitude] !== false);
 
         return compact('latitude', 'longitude');
     }
