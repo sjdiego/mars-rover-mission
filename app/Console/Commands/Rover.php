@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Exceptions\CollisionException;
 use App\Http\Controllers\{EnvironmentController, VehicleController};
 use App\Models\{Terrain, Vehicle};
 use Illuminate\Console\Command;
@@ -45,7 +44,7 @@ class Rover extends Command
 
             $this->handleCommands($terrain, $vehicle);
         } catch (\Exception $e) {
-            $this->error($e);
+            $this->error($e->getMessage());
         }
     }
 
@@ -98,9 +97,12 @@ class Rover extends Command
         $controller = new VehicleController($terrain, $vehicle);
         $path = $controller->executeCommands($commands);
 
-        dump(json_encode($path, JSON_PRETTY_PRINT));
+        $finalPosition = collect($path)->last();
 
-        $this->info(__('messages.commands.success', ['commands' => $commands]));
+        $this->info(__('messages.commands.success', [
+            'commands' => $commands,
+            'finalPosition' => collect($finalPosition)->implode(','),
+        ]));
     }
 
     /**

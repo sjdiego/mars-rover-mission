@@ -16,11 +16,21 @@ class VehicleController
 
     public function executeCommands(string $commands)
     {
-        return collect(str_split($commands))->transform(function ($code) {
+        $path = [];
+
+        collect(str_split($commands))->each(function ($code) use (&$path) {
             $command = new Command($code);
             $nextCoords = $this->vehicle->getCoordsFromCommand($command);
 
             if (!$this->checkPosition($nextCoords)) {
+                throw new \Exception(__('messages.colission.detected', [
+                    'obstacle' => implode(',', $nextCoords),
+                    'safePosition' => implode(',', [
+                        $this->vehicle->latitude,
+                        $this->vehicle->longitude,
+                    ])
+                ]));
+
                 return false;
             }
 
@@ -28,8 +38,10 @@ class VehicleController
             $this->vehicle->longitude = $nextCoords['longitude'];
             $this->vehicle->orientation = $nextCoords['orientation'];
 
-            return $nextCoords;
+            $path[] = $nextCoords;
         });
+
+        return $path;
     }
 
     protected function checkPosition(array $coords): bool
