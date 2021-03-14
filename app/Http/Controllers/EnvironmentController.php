@@ -9,7 +9,7 @@ class EnvironmentController
     public function prepare()
     {
         // Generates a new terrain with randomly placed obstacles
-        $terrain = new Terrain(width: 35, height: 10);
+        $terrain = new Terrain(width: 60, height: 20);
 
         // Gets a safe location to place vehicle
         $coords = $terrain->getRandomLocation();

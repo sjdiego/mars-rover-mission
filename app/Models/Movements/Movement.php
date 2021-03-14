@@ -2,8 +2,6 @@
 
 namespace App\Models\Movements;
 
-use App\Models\Vehicle;
-
 abstract class Movement
 {
     public int $latitude;

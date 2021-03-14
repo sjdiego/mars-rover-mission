@@ -97,8 +97,9 @@ class Rover extends Command
         $controller = new VehicleController($terrain, $vehicle);
         $path = $controller->executeCommands($commands);
 
-        $finalPosition = collect($path)->last();
+        $this->table(['lat', 'lng', 'orientation'], $path);
 
+        $finalPosition = collect($path)->last();
         $this->info(__('messages.commands.success', [
             'commands' => $commands,
             'finalPosition' => collect($finalPosition)->implode(','),

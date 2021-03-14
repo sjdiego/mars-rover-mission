@@ -24,6 +24,7 @@ class Vehicle
             'F' => (new Forward($this))->get(),
             'R' => (new Right($this))->get(),
             'L' => (new Left($this))->get(),
+            default => false,
         };
     }
 }
