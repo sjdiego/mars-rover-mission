@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\{Terrain, Vehicle};
 
+/**
+ * Class that manages the fictional environment on Mars
+ */
 class EnvironmentController
 {
-    public function prepare()
+    /**
+     * It returns an array with a Terrain and a placed Vehicle
+     *
+     * @return array
+     */
+    public function prepare(): array
     {
         // Generates a new terrain with randomly placed obstacles
         $terrain = new Terrain(width: 60, height: 20);

@@ -86,7 +86,7 @@ class Rover extends Command
      *
      * @return void
      */
-    protected function handleCommands(Terrain $terrain, Vehicle $vehicle)
+    protected function handleCommands(Terrain $terrain, Vehicle $vehicle): void
     {
         $this->newLine();
 
@@ -114,7 +114,7 @@ class Rover extends Command
      *
      * @return void
      */
-    protected function drawTerrain(Terrain $terrain, Vehicle $vehicle)
+    protected function drawTerrain(Terrain $terrain, Vehicle $vehicle): void
     {
         echo str_pad('', count($terrain->surface[0]) + 2, '-') . PHP_EOL;
 

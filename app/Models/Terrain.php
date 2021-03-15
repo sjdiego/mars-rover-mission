@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+/**
+ * Class that manages data of Mars' surface
+ */
 class Terrain
 {
     const OBSTACLE_PROBABLITY = 0.1;

@@ -1,6 +1,10 @@
 <?php
 
 namespace App\Models;
+
+/**
+ * Class that manages the creation of valid Commands
+ */
 class Command
 {
     const AVAILABLE_COMMANDS = ['F', 'R', 'L'];
